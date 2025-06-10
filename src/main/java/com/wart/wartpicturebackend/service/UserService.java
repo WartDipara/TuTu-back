@@ -1,10 +1,15 @@
 package com.wart.wartpicturebackend.service;
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.wart.wartpicturebackend.model.dto.UserAddRequest;
+import com.wart.wartpicturebackend.model.dto.UserQueryRequest;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wart.wartpicturebackend.model.vo.LoginUserVO;
+import com.wart.wartpicturebackend.model.vo.UserVO;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 /**
  * @author Wart
@@ -62,4 +67,28 @@ public interface UserService extends IService<User> {
    * @return 脱敏后的用户信息
    */
   LoginUserVO getLoginUserVO(User user);
+  
+  /**
+   * 获得脱敏后的用户信息
+   *
+   * @param user 用户信息
+   * @return 脱敏后的用户信息
+   */
+  UserVO getUserVO(User user);
+  
+  /**
+   * 获得脱敏后的用户信息列表
+   *
+   * @param userList 用户信息
+   * @return 脱敏后的用户信息列表
+   */
+  List<UserVO> getUserVOList(List<User> userList);
+  
+  /**
+   * 获取查询条件
+   *
+   * @param userQueryRequest 用户查询条件
+   * @return 查询条件
+   */
+  QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
 }

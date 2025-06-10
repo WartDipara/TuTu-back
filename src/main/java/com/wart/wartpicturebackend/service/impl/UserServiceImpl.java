@@ -1,17 +1,22 @@
 package com.wart.wartpicturebackend.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.repository.AbstractRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wart.wartpicturebackend.constant.UserConstant;
 import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
+import com.wart.wartpicturebackend.model.dto.UserAddRequest;
+import com.wart.wartpicturebackend.model.dto.UserQueryRequest;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.wart.wartpicturebackend.model.enums.UserRoleEnum;
 import com.wart.wartpicturebackend.model.vo.LoginUserVO;
+import com.wart.wartpicturebackend.model.vo.UserVO;
 import com.wart.wartpicturebackend.service.UserService;
 import com.wart.wartpicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,6 +25,10 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Wart
@@ -102,6 +111,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
   
   /**
    * 获取当前登录用户
+   *
    * @param request 请求
    * @return 用户
    */
@@ -110,11 +120,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     // 判断是否登录
     Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
     User curUser = (User) attribute;
-    ThrowUtils.throwIf((curUser==null || curUser.getId()==null), ErrorCode.NOT_LOGIN_ERROR);
+    ThrowUtils.throwIf((curUser == null || curUser.getId() == null), ErrorCode.NOT_LOGIN_ERROR);
     // 考虑到数据库数据可能有变动,比如改名了（从数据库再获取一次，用性能换取稳定性）
     curUser = this.getById(curUser.getId());
     // 如果用户被删除了或者找不到了，抛出异常
-    ThrowUtils.throwIf((curUser==null ||curUser.getIsDelete() == 1), ErrorCode.NOT_LOGIN_ERROR);
+    ThrowUtils.throwIf((curUser == null || curUser.getIsDelete() == 1), ErrorCode.NOT_LOGIN_ERROR);
     return curUser;
   }
   
@@ -123,7 +133,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     // 判断是否登录
     Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
     User curUser = (User) attribute;
-    ThrowUtils.throwIf(curUser==null,ErrorCode.OPERATION_ERROR,"未登录");
+    ThrowUtils.throwIf(curUser == null, ErrorCode.OPERATION_ERROR, "未登录");
     // 移除登录
     request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
     return true;
@@ -156,6 +166,65 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     LoginUserVO loginUserVO = new LoginUserVO();
     BeanUtil.copyProperties(user, loginUserVO);
     return loginUserVO;
+  }
+  
+  /**
+   * 用户转换逻辑
+   *
+   * @param user 用户信息
+   * @return
+   */
+  @Override
+  public UserVO getUserVO(User user) {
+    if (user == null) {
+      return null;
+    }
+    UserVO UserVO = new UserVO();
+    BeanUtil.copyProperties(user, UserVO);
+    return UserVO;
+  }
+  
+  /**
+   * 获取脱敏用户列表
+   *
+   * @param userList 用户信息
+   * @return 脱敏用户列表
+   */
+  @Override
+  public List<UserVO> getUserVOList(List<User> userList) {
+    if (CollUtil.isEmpty(userList))
+      return new ArrayList<>();
+    return userList.stream().map(this::getUserVO).collect(Collectors.toList());
+  }
+  
+  /**
+   * 获取查询条件
+   *
+   * @param userQueryRequest 用户查询条件
+   * @return
+   */
+  @Override
+  public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
+    //校验
+    ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR, "请求参数为空");
+    //获取对象
+    Long id = userQueryRequest.getId();
+    String userName = userQueryRequest.getUserName();
+    String userAccount = userQueryRequest.getUserAccount();
+    String userProfile = userQueryRequest.getUserProfile();
+    String userRole = userQueryRequest.getUserRole();
+    int current = userQueryRequest.getCurrent();
+    int pageSize = userQueryRequest.getPageSize();
+    String sortField = userQueryRequest.getSortField();
+    String sortOrder = userQueryRequest.getSortOrder();
+    QueryWrapper<User> queryWrapper = new QueryWrapper<>();
+    queryWrapper.eq(id != null && id > 0, "id", id);
+    queryWrapper.eq(StrUtil.isNotBlank(userRole), "userRole", userRole);
+    queryWrapper.like(StrUtil.isNotBlank(userName), "userName", userName);
+    queryWrapper.like(StrUtil.isNotBlank(userAccount), "userAccount", userAccount);
+    queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
+    queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),  sortOrder.equals("ascend"), sortField);
+    return queryWrapper;
   }
 }
 
