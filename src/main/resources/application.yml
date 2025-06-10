@@ -10,6 +10,9 @@ spring:
     url: jdbc:mysql://localhost:3306/wart_picture
     username: ${wart-picture.mysql.username}
     password: ${wart-picture.mysql.password}
+  config:
+    import:
+      - classpath:application-self.properties
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
