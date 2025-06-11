@@ -98,7 +98,7 @@ public class UserController {
     user.setUserPassword(userService.getEncryptPassword(DEFAULT_PASSWORD));
     //插入数据库
     boolean saveResult = userService.save(user);
-    ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR,  "注册用户失败");
+    ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR,  "User registration failed");
     return ResultUtils.success(user.getId());
   }
   

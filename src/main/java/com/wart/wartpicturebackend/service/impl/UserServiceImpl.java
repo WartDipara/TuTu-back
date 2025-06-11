@@ -53,17 +53,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
   public long userRegister(String userAccount, String userPassword, String checkPassword) {
     //1.校验 也可以用ThrowUtils工具类，之后都会使用ThrowUtils工具类来抛
     if (StrUtil.hasBlank(userAccount, userPassword, checkPassword))
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "参数为空");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "empty params");
     if (userAccount.length() < 4)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户账号过短");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "User Account is too short");
     if (userPassword.length() < 8)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户密码过短");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "User Password is too short");
     if (!userPassword.equals(checkPassword))
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "Two entered passwords do not match");
     //2.检查重复
     Long count = this.baseMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUserAccount, userAccount));
     if (count > 0)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "账号重复");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "Duplicate Account");
     //3.加密
     String encryptPassword = getEncryptPassword(userPassword);
     //4，插入数据
@@ -74,7 +74,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     user.setUserRole(UserRoleEnum.USER.getValue());
     boolean saveResult = this.save(user);
     if (!saveResult)
-      throw new BusinessException(ErrorCode.SYSTEM_ERROR, "注册失败，数据库发生错误");
+      throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Registration failed, a database error occurred");
     return user.getId();
   }
   
@@ -89,9 +89,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
   @Override
   public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
     //1.校验 这里使用自己写的工具类来抛（更简短且优雅） 更直接的参考注册部分
-    ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR, "参数为空");
-    ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "用户账号错误");
-    ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "用户密码错误");
+    ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR, "Empty Params");
+    ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "User Account Error");
+    ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "User Password Error");
     //2.对用户密码进行加密
     String encryptPassword = getEncryptPassword(userPassword);
     //3.匹配加密后的密码与数据库是否存在
@@ -133,7 +133,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     // 判断是否登录
     Object attribute = request.getSession().getAttribute(UserConstant.USER_LOGIN_STATE);
     User curUser = (User) attribute;
-    ThrowUtils.throwIf(curUser == null, ErrorCode.OPERATION_ERROR, "未登录");
+    ThrowUtils.throwIf(curUser == null, ErrorCode.OPERATION_ERROR, "not sign in");
     // 移除登录
     request.getSession().removeAttribute(UserConstant.USER_LOGIN_STATE);
     return true;
@@ -206,7 +206,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
   @Override
   public QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest) {
     //校验
-    ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR, "请求参数为空");
+    ThrowUtils.throwIf(userQueryRequest == null, ErrorCode.PARAMS_ERROR, "request params are empty");
     //获取对象
     Long id = userQueryRequest.getId();
     String userName = userQueryRequest.getUserName();
