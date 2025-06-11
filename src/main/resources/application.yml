@@ -33,3 +33,12 @@ knife4j:
         api-rule: package
         api-rule-resources:
           - com.wart.wartpicturebackend.controller
+
+# 腾讯云 cos配置
+cos:
+  client:
+    host: ${wart-picture.cos.client.host}
+    secret-id: ${wart-picture.cos.client.secret.id}
+    secret-key: ${wart-picture.cos.client.secret.key}
+    region: ${wart-picture.cos.client.region}
+    bucket: ${wart-picture.cos.client.bucket}

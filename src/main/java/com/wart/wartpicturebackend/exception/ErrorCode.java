@@ -10,7 +10,7 @@ public enum ErrorCode {
   SUCCESS(0, "ok"),
   PARAMS_ERROR(40000, "request params are incorrect"),
   NOT_LOGIN_ERROR(40100, "not sign in"),
-  NO_AUTH_ERROR(40101, "no authorization"),
+  NO_AUTH_ERROR(40101, "no authority"),
   NOT_FOUND_ERROR(40400, "request data does not exist"),
   FORBIDDEN_ERROR(40300, "access denied"),
   SYSTEM_ERROR(50000, "internal system error"),
