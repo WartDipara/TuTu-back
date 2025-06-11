@@ -94,11 +94,11 @@ public class UserController {
     User user = new User();
     BeanUtil.copyProperties(userAddRequest, user);
     // 默认密码
-    final String DEFAULT_PASSWORD = "12345678";
+    final String DEFAULT_PASSWORD = "123456789";
     user.setUserPassword(userService.getEncryptPassword(DEFAULT_PASSWORD));
     //插入数据库
     boolean saveResult = userService.save(user);
-    ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR,  "User registration failed");
+    ThrowUtils.throwIf(!saveResult, ErrorCode.OPERATION_ERROR,  "user registration failed");
     return ResultUtils.success(user.getId());
   }
   

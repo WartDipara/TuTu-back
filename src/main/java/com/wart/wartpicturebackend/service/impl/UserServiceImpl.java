@@ -55,26 +55,26 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     if (StrUtil.hasBlank(userAccount, userPassword, checkPassword))
       throw new BusinessException(ErrorCode.PARAMS_ERROR, "empty params");
     if (userAccount.length() < 4)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "User Account is too short");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "user account is too short");
     if (userPassword.length() < 8)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "User Password is too short");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "user password is too short");
     if (!userPassword.equals(checkPassword))
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "Two entered passwords do not match");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "two entered passwords do not match");
     //2.检查重复
     Long count = this.baseMapper.selectCount(new LambdaQueryWrapper<User>().eq(User::getUserAccount, userAccount));
     if (count > 0)
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "Duplicate Account");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "duplicate account");
     //3.加密
     String encryptPassword = getEncryptPassword(userPassword);
     //4，插入数据
     User user = new User();
     user.setUserAccount(userAccount);
     user.setUserPassword(encryptPassword);
-    user.setUserName("无名");
+    user.setUserName(userAccount);
     user.setUserRole(UserRoleEnum.USER.getValue());
     boolean saveResult = this.save(user);
     if (!saveResult)
-      throw new BusinessException(ErrorCode.SYSTEM_ERROR, "Registration failed, a database error occurred");
+      throw new BusinessException(ErrorCode.SYSTEM_ERROR, "registration failed, a database error occurred");
     return user.getId();
   }
   
@@ -89,9 +89,9 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
   @Override
   public LoginUserVO userLogin(String userAccount, String userPassword, HttpServletRequest request) {
     //1.校验 这里使用自己写的工具类来抛（更简短且优雅） 更直接的参考注册部分
-    ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR, "Empty Params");
-    ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "User Account Error");
-    ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "User Password Error");
+    ThrowUtils.throwIf(StrUtil.hasBlank(userAccount, userPassword), ErrorCode.PARAMS_ERROR, "empty params");
+    ThrowUtils.throwIf(userAccount.length() < 4, ErrorCode.PARAMS_ERROR, "user account error");
+    ThrowUtils.throwIf(userPassword.length() < 8, ErrorCode.PARAMS_ERROR, "user password error");
     //2.对用户密码进行加密
     String encryptPassword = getEncryptPassword(userPassword);
     //3.匹配加密后的密码与数据库是否存在
@@ -102,7 +102,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     //抛出异常
     if (user == null) {
       log.info("user login failed, userAccount cannot match userPassword");
-      throw new BusinessException(ErrorCode.PARAMS_ERROR, "用户不存在或密码错误");
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "user does not exist or password is incorrect");
     }
     //4.保存用户登录态
     request.getSession().setAttribute(UserConstant.USER_LOGIN_STATE, user);

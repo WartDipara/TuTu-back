@@ -8,13 +8,13 @@ import lombok.Getter;
 @Getter
 public enum ErrorCode {
   SUCCESS(0, "ok"),
-  PARAMS_ERROR(40000, "Request Params are Incorrect"),
-  NOT_LOGIN_ERROR(40100, "Not Sign In"),
-  NO_AUTH_ERROR(40101, "No Authorization"),
-  NOT_FOUND_ERROR(40400, "Request Data Does Not Exist"),
-  FORBIDDEN_ERROR(40300, "Access Denied"),
-  SYSTEM_ERROR(50000, "Internal System Error"),
-  OPERATION_ERROR(50001, "Operation Failed");
+  PARAMS_ERROR(40000, "request params are incorrect"),
+  NOT_LOGIN_ERROR(40100, "not sign in"),
+  NO_AUTH_ERROR(40101, "no authorization"),
+  NOT_FOUND_ERROR(40400, "request data does not exist"),
+  FORBIDDEN_ERROR(40300, "access denied"),
+  SYSTEM_ERROR(50000, "internal system error"),
+  OPERATION_ERROR(50001, "operation failed");
   
   /**
    * 状态码
