@@ -1,5 +1,8 @@
 package com.wart.wartpicturebackend.controller;
 
+import com.qcloud.cos.model.COSObject;
+import com.qcloud.cos.model.COSObjectInputStream;
+import com.qcloud.cos.utils.IOUtils;
 import com.wart.wartpicturebackend.annotation.AuthCheck;
 import com.wart.wartpicturebackend.common.BaseResponse;
 import com.wart.wartpicturebackend.common.ResultUtils;
@@ -8,13 +11,12 @@ import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.manager.CosManager;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 
@@ -63,6 +65,38 @@ public class FileController {
           log.error("file delete error, filepath={}", filepath);
         }
       }
+    }
+  }
+  
+  /**
+   * 测试下载
+   *
+   * @param filepath 文件路径
+   * @param response 响应
+   */
+  @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+  @GetMapping("/test/download")
+  public void testDownloadFile(String filepath, HttpServletResponse response) {
+    COSObjectInputStream cosObjectInput = null;
+    try {
+      COSObject cosObject = cosManager.getObject(filepath);
+      cosObjectInput = cosObject.getObjectContent();
+      byte[] bytes = IOUtils.toByteArray(cosObjectInput);
+      
+      //响应头
+      response.setContentType("application/octet-stream;charset=UTF-8");
+      response.setHeader("Content-Disposition", "attachment;filename=" + filepath);
+      
+      //写入响应
+      response.getOutputStream().write(bytes);
+      response.getOutputStream().flush();
+    } catch (Exception e) {
+      log.error("file download error, filepath={}", filepath);
+      throw new BusinessException(ErrorCode.SYSTEM_ERROR, "download error");
+    }finally {
+      //关闭流
+      if(cosObjectInput != null)
+        IOUtils.release(cosObjectInput, log); //自带的close封装方法
     }
   }
 }

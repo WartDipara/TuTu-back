@@ -5,14 +5,12 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.baomidou.mybatisplus.extension.repository.AbstractRepository;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.wart.wartpicturebackend.constant.UserConstant;
 import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
-import com.wart.wartpicturebackend.model.dto.UserAddRequest;
-import com.wart.wartpicturebackend.model.dto.UserQueryRequest;
+import com.wart.wartpicturebackend.model.dto.user.UserQueryRequest;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.wart.wartpicturebackend.model.enums.UserRoleEnum;
 import com.wart.wartpicturebackend.model.vo.LoginUserVO;
@@ -21,12 +19,10 @@ import com.wart.wartpicturebackend.service.UserService;
 import com.wart.wartpicturebackend.mapper.UserMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.DigestUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -225,6 +221,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     queryWrapper.like(StrUtil.isNotBlank(userProfile), "userProfile", userProfile);
     queryWrapper.orderBy(StrUtil.isNotEmpty(sortField),  sortOrder.equals("ascend"), sortField);
     return queryWrapper;
+  }
+  
+  /**
+   * 判断是否为管理员
+   * @param user 用户
+   * @return
+   */
+  @Override
+  public boolean isAdmin(User user) {
+    return user!=null && UserRoleEnum.ADMIN.getValue().equals(user.getUserRole());
   }
 }
 

@@ -1,4 +1,4 @@
-package com.wart.wartpicturebackend.model.dto;
+package com.wart.wartpicturebackend.model.dto.user;
 
 import lombok.Data;
 

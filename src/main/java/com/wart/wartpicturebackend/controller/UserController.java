@@ -9,7 +9,7 @@ import com.wart.wartpicturebackend.common.ResultUtils;
 import com.wart.wartpicturebackend.constant.UserConstant;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
-import com.wart.wartpicturebackend.model.dto.*;
+import com.wart.wartpicturebackend.model.dto.user.*;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.wart.wartpicturebackend.model.vo.LoginUserVO;
 import com.wart.wartpicturebackend.model.vo.UserVO;

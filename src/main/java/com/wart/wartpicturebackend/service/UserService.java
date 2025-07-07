@@ -1,8 +1,7 @@
 package com.wart.wartpicturebackend.service;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.wart.wartpicturebackend.model.dto.UserAddRequest;
-import com.wart.wartpicturebackend.model.dto.UserQueryRequest;
+import com.wart.wartpicturebackend.model.dto.user.UserQueryRequest;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.wart.wartpicturebackend.model.vo.LoginUserVO;
@@ -91,4 +90,13 @@ public interface UserService extends IService<User> {
    * @return 查询条件
    */
   QueryWrapper<User> getQueryWrapper(UserQueryRequest userQueryRequest);
+  
+  /**
+   * 是否为管理员
+   *
+   * @param user 用户
+   * @return 确认身份结果
+   */
+  boolean isAdmin(User user);
+  
 }
