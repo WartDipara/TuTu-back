@@ -7,28 +7,29 @@ import cn.hutool.core.util.StrUtil;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
 import com.wart.wartpicturebackend.manager.FileManager;
 import com.wart.wartpicturebackend.model.dto.file.UploadPictureResult;
 import com.wart.wartpicturebackend.model.dto.picture.PictureQueryRequest;
+import com.wart.wartpicturebackend.model.dto.picture.PictureReviewRequest;
 import com.wart.wartpicturebackend.model.dto.picture.PictureUploadRequest;
 import com.wart.wartpicturebackend.model.entity.Picture;
 import com.wart.wartpicturebackend.model.entity.User;
+import com.wart.wartpicturebackend.model.enums.PictureReviewStatusEnum;
 import com.wart.wartpicturebackend.model.vo.PictureVO;
 import com.wart.wartpicturebackend.model.vo.UserVO;
 import com.wart.wartpicturebackend.service.PictureService;
 import com.wart.wartpicturebackend.mapper.PictureMapper;
 import com.wart.wartpicturebackend.service.UserService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,10 +54,11 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     }
     // 如果是更新图片，需要校验图片是否存在
     if (pictureId != null) {
-      boolean exists = this.lambdaQuery()
-          .eq(Picture::getId, pictureId)
-          .exists();
-      ThrowUtils.throwIf(!exists, ErrorCode.NOT_FOUND_ERROR, "picture not exist");
+      Picture oldPicture = this.getById(pictureId);
+      ThrowUtils.throwIf(oldPicture==null, ErrorCode.NOT_FOUND_ERROR, "picture not exist");
+      // 限制本人操作
+      if(!Objects.equals(oldPicture.getUserId(), loginUser.getId()) && !userService.isAdmin(loginUser))
+        throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
     }
     // 上传图片，得到信息
     // 按照用户 id 划分目录
@@ -208,6 +210,37 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
       ThrowUtils.throwIf(introduction.length() > 800, ErrorCode.PARAMS_ERROR, "too long for introduction");
     }
   }
+  
+  /**
+   * 图片审核
+   * @param pictureReviewRequest
+   * @param loginUser
+   */
+  @Override
+  public void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser) {
+    Long id = pictureReviewRequest.getId();
+    Integer reviewStatus = pictureReviewRequest.getReviewStatus();
+    PictureReviewStatusEnum reviewStatusEnum = PictureReviewStatusEnum.getEnumByValue(reviewStatus);
+    // 不能将状态改回待审核
+    if (id == null || reviewStatusEnum == null || PictureReviewStatusEnum.REVIEWING.equals(reviewStatusEnum)) {
+      throw new BusinessException(ErrorCode.PARAMS_ERROR);
+    }
+    // 判断是否存在
+    Picture oldPicture = this.getById(id);
+    ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR);
+    // 已是该状态
+    if (oldPicture.getReviewStatus().equals(reviewStatus)) {
+      throw new BusinessException(ErrorCode.PARAMS_ERROR, "no duplicate review");
+    }
+    // 更新审核状态
+    Picture updatePicture = new Picture();
+    BeanUtils.copyProperties(pictureReviewRequest, updatePicture);
+    updatePicture.setReviewerId(loginUser.getId());
+    updatePicture.setReviewTime(new Date());
+    boolean result = this.updateById(updatePicture);
+    ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+  }
+  
   
   
 }

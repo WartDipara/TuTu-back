@@ -3,6 +3,7 @@ package com.wart.wartpicturebackend.service;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.wart.wartpicturebackend.model.dto.picture.PictureQueryRequest;
+import com.wart.wartpicturebackend.model.dto.picture.PictureReviewRequest;
 import com.wart.wartpicturebackend.model.dto.picture.PictureUploadRequest;
 import com.wart.wartpicturebackend.model.entity.Picture;
 import com.baomidou.mybatisplus.extension.service.IService;
@@ -43,7 +44,26 @@ public interface PictureService extends IService<Picture> {
    */
   PictureVO getPictureVO(Picture picture, HttpServletRequest  request);
   
+  /**
+   * 脱敏图片
+   * @param picturePage
+   * @param request
+   * @return
+   */
   Page<PictureVO> getPictureVOPage(Page<Picture> picturePage, HttpServletRequest request);
   
+  /**
+   * 数据校验
+   * @param picture
+   */
   void validPicture(Picture picture);
+  
+  /**
+   * 图片审核
+   *
+   * @param pictureReviewRequest
+   * @param loginUser
+   */
+  void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
+  
 }

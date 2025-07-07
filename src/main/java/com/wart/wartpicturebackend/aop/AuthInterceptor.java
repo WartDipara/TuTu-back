@@ -32,7 +32,7 @@ public class AuthInterceptor {
    * @param authCheck 权限注解
    * @return
    */
-  @Around("@annotation(authCheck)")
+  @Around("@annotation(authCheck)") // 切面，该方法由authCheck注解触发
   public Object doInterceptor(ProceedingJoinPoint joinPoint, AuthCheck authCheck) throws Throwable{
     String mustRole = authCheck.mustRole();
     RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();

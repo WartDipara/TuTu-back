@@ -10,10 +10,7 @@ import com.wart.wartpicturebackend.constant.UserConstant;
 import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
-import com.wart.wartpicturebackend.model.dto.picture.PictureEditRequest;
-import com.wart.wartpicturebackend.model.dto.picture.PictureQueryRequest;
-import com.wart.wartpicturebackend.model.dto.picture.PictureUpdateRequest;
-import com.wart.wartpicturebackend.model.dto.picture.PictureUploadRequest;
+import com.wart.wartpicturebackend.model.dto.picture.*;
 import com.wart.wartpicturebackend.model.entity.Picture;
 import com.wart.wartpicturebackend.model.entity.User;
 import com.wart.wartpicturebackend.model.vo.PictureTagCategory;
@@ -195,6 +192,10 @@ public class PictureController {
     return ResultUtils.success(true);
   }
   
+  /**
+   * 获取标签分类
+   * @return
+   */
   @GetMapping("/tag_category")
   public BaseResponse<PictureTagCategory> listPictureTagCategory() {
     PictureTagCategory pictureTagCategory = new PictureTagCategory();
@@ -205,5 +206,21 @@ public class PictureController {
     return ResultUtils.success(pictureTagCategory);
   }
   
+  /**
+   * 图片审核
+   * @param pictureReviewRequest
+   * @param request
+   * @return
+   */
+  @PostMapping("/review")
+  @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+  public BaseResponse<Boolean> doPictureReview(@RequestBody PictureReviewRequest pictureReviewRequest,
+                                               HttpServletRequest request) {
+    
+    ThrowUtils.throwIf(pictureReviewRequest == null, ErrorCode.PARAMS_ERROR);
+    User loginUser = userService.getLoginUser(request);
+    pictureService.doPictureReview(pictureReviewRequest, loginUser);
+    return ResultUtils.success(true);
+  }
   
 }

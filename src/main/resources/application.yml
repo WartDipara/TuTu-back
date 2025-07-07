@@ -17,6 +17,12 @@ spring:
   config:
     import:
       - classpath:application-self.properties
+  redis:
+    database: 0
+    host: ${wart-picture.redis.host}
+    port: ${wart-picture.redis.port}
+    password: ${wart-picture.redis.password}
+    timeout: 5000
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: false
