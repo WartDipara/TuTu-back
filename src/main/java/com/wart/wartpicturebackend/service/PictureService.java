@@ -21,12 +21,12 @@ import javax.servlet.http.HttpServletRequest;
 public interface PictureService extends IService<Picture> {
   /**
    * 上传图片
-   * @param multipartFile  图片文件
+   * @param inputSource  输入源
    * @param pictureUploadRequest 上传图片请求
    * @param loginUser 登录用户
    * @return PictureVO
    */
-  PictureVO uploadPicture(MultipartFile multipartFile,
+  PictureVO uploadPicture(Object inputSource,
                           PictureUploadRequest pictureUploadRequest,
                           User loginUser);
   /**
@@ -66,4 +66,10 @@ public interface PictureService extends IService<Picture> {
    */
   void doPictureReview(PictureReviewRequest pictureReviewRequest, User loginUser);
   
+  /**
+   * 填充审核参数
+   * @param picture
+   * @param loginUser
+   */
+  void fillReviewParams(Picture picture, User loginUser);
 }

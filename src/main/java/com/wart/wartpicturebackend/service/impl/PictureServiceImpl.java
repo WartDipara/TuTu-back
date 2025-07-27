@@ -11,6 +11,9 @@ import com.wart.wartpicturebackend.exception.BusinessException;
 import com.wart.wartpicturebackend.exception.ErrorCode;
 import com.wart.wartpicturebackend.exception.ThrowUtils;
 import com.wart.wartpicturebackend.manager.FileManager;
+import com.wart.wartpicturebackend.manager.upload.FilePictureUpload;
+import com.wart.wartpicturebackend.manager.upload.PictureUploadTemplate;
+import com.wart.wartpicturebackend.manager.upload.UrlPictureUpload;
 import com.wart.wartpicturebackend.model.dto.file.UploadPictureResult;
 import com.wart.wartpicturebackend.model.dto.picture.PictureQueryRequest;
 import com.wart.wartpicturebackend.model.dto.picture.PictureReviewRequest;
@@ -41,11 +44,18 @@ import java.util.stream.Collectors;
 public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> implements PictureService {
   @Resource
   FileManager fileManager;
+  
   @Resource
-  UserService userService;
+  private FilePictureUpload filePictureUpload;
+  
+  @Resource
+  private UrlPictureUpload urlPictureUpload;
+  
+  @Resource
+  private UserService userService;
   
   @Override
-  public PictureVO uploadPicture(MultipartFile multipartFile, PictureUploadRequest pictureUploadRequest, User loginUser) {
+  public PictureVO uploadPicture(Object inputSource, PictureUploadRequest pictureUploadRequest, User loginUser) {
     ThrowUtils.throwIf(loginUser == null, ErrorCode.NO_AUTH_ERROR);
     // 用于判断是新增还是更新图片
     Long pictureId = null;
@@ -55,15 +65,17 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     // 如果是更新图片，需要校验图片是否存在
     if (pictureId != null) {
       Picture oldPicture = this.getById(pictureId);
-      ThrowUtils.throwIf(oldPicture==null, ErrorCode.NOT_FOUND_ERROR, "picture not exist");
+      ThrowUtils.throwIf(oldPicture == null, ErrorCode.NOT_FOUND_ERROR, "picture not exist");
       // 限制本人操作
-      if(!Objects.equals(oldPicture.getUserId(), loginUser.getId()) && !userService.isAdmin(loginUser))
+      if (!Objects.equals(oldPicture.getUserId(), loginUser.getId()) && !userService.isAdmin(loginUser))
         throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
     }
     // 上传图片，得到信息
     // 按照用户 id 划分目录
     String uploadPathPrefix = String.format("public/%s", loginUser.getId());
-    UploadPictureResult uploadPictureResult = fileManager.uploadPicture(multipartFile, uploadPathPrefix);
+    // 根据 inputSource类型判断调用上传方法
+    PictureUploadTemplate pictureUploadTemplate = inputSource instanceof String ? urlPictureUpload : filePictureUpload;
+    UploadPictureResult uploadPictureResult = pictureUploadTemplate.uploadPicture(inputSource, uploadPathPrefix);
     // 构造要入库的图片信息
     Picture picture = new Picture();
     picture.setUrl(uploadPictureResult.getUrl());
@@ -80,6 +92,8 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
       picture.setId(pictureId);
       picture.setEditTime(new Date());
     }
+    //补充审核参数
+    this.fillReviewParams(picture, loginUser);
     boolean result = this.saveOrUpdate(picture);
     ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR, "picture upload failed");
     return PictureVO.objToVo(picture);
@@ -112,6 +126,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     Long userId = pictureQueryRequest.getUserId();
     String sortFiled = pictureQueryRequest.getSortField();
     String sortOrder = pictureQueryRequest.getSortOrder();
+    Integer reviewStatus = pictureQueryRequest.getReviewStatus();
+    String reviewMessage = pictureQueryRequest.getReviewMessage();
+    Long reviewerId = pictureQueryRequest.getReviewerId();
     
     if (StrUtil.isNotBlank(searchText)) {
       // 模糊搜索
@@ -130,6 +147,9 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     queryWrapper.eq(ObjUtil.isNotEmpty(picHeight), "picHeight", picHeight);
     queryWrapper.eq(ObjUtil.isNotEmpty(picSize), "picSize", picSize);
     queryWrapper.eq(ObjectUtil.isNotEmpty(picScale), "picScale", picScale);
+    queryWrapper.eq(ObjectUtil.isNotEmpty(reviewStatus), "reviewStatus", reviewStatus);
+    queryWrapper.like(StrUtil.isNotBlank(reviewMessage), "reviewMessage", reviewMessage);
+    queryWrapper.eq(ObjectUtil.isNotEmpty(reviewerId), "reviewerId", reviewerId);
     
     //JSON 数组查询
     if (CollUtil.isNotEmpty(tags))
@@ -213,6 +233,7 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
   
   /**
    * 图片审核
+   *
    * @param pictureReviewRequest
    * @param loginUser
    */
@@ -241,7 +262,25 @@ public class PictureServiceImpl extends ServiceImpl<PictureMapper, Picture> impl
     ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
   }
   
-  
+  /**
+   * 填充审核参数
+   *
+   * @param picture
+   * @param loginUser
+   */
+  @Override
+  public void fillReviewParams(Picture picture, User loginUser) {
+    if (userService.isAdmin(loginUser)) {
+      //管理员不用审
+      picture.setReviewStatus(PictureReviewStatusEnum.PASS.getValue());
+      picture.setReviewTime(new Date());
+      picture.setReviewerId(loginUser.getId());
+      picture.setReviewMessage("Auto Pass(Admin)");
+    } else {
+      //非管理员 设置审核信息
+      picture.setReviewStatus(PictureReviewStatusEnum.REVIEWING.getValue());
+    }
+  }
   
 }
 
